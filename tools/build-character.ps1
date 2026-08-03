@@ -1,11 +1,35 @@
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$Generator = Join-Path $RepoRoot "TheShatteredVeil\BlenderGenerateAsset.py"
 $OutputDir = Join-Path $RepoRoot "TheShatteredVeil"
+$Generator = Join-Path $OutputDir "BlenderGenerateAsset.py"
+$GeneratorParts = Join-Path $PSScriptRoot "generator"
 
-if (-not (Test-Path $Generator)) {
-    throw "Missing generator: $Generator. Run git pull and try again."
+New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
+
+# Restore the readable Blender Python generator from the compressed repository source.
+# This avoids requiring the user to copy a large script manually.
+$parts = Get-ChildItem $GeneratorParts -Filter "BlenderGenerateAsset.py.gz.b64.part*" -File |
+    Sort-Object Name
+if (-not $parts) {
+    throw "Generator source parts were not found in $GeneratorParts. Run git pull and try again."
+}
+
+$base64 = ($parts | ForEach-Object { Get-Content $_.FullName -Raw }) -join ""
+$compressedBytes = [Convert]::FromBase64String($base64)
+$inputStream = [System.IO.MemoryStream]::new($compressedBytes)
+$gzipStream = [System.IO.Compression.GZipStream]::new(
+    $inputStream,
+    [System.IO.Compression.CompressionMode]::Decompress
+)
+$outputStream = [System.IO.File]::Create($Generator)
+try {
+    $gzipStream.CopyTo($outputStream)
+}
+finally {
+    $outputStream.Dispose()
+    $gzipStream.Dispose()
+    $inputStream.Dispose()
 }
 
 $candidates = @()
@@ -60,4 +84,4 @@ foreach ($file in $required) {
     }
 }
 
-Write-Host "The Shattered Veil blockout generated successfully." -ForegroundColor Green
+Write-Host "The Shattered Veil Blender blockout generated successfully." -ForegroundColor Green
