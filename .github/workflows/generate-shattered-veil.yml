@@ -1,0 +1,81 @@
+name: Generate The Shattered Veil Asset
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".bootstrap/**"
+      - "TheShatteredVeil/BlenderGenerateAsset.py"
+      - "TheShatteredVeil/README_IMPORT_TO_ROBLOX.md"
+      - "TheShatteredVeil/RobloxSetup.lua"
+      - ".github/workflows/generate-shattered-veil.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shattered-veil-generation
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore source bundle
+        shell: bash
+        run: |
+          if compgen -G ".bootstrap/source_bundle.b64.part*" > /dev/null; then
+            cat .bootstrap/source_bundle.b64.part* | base64 --decode > /tmp/source_bundle.tar.gz
+            tar -xzf /tmp/source_bundle.tar.gz -C "$GITHUB_WORKSPACE"
+            rm -rf .bootstrap
+          fi
+
+      - name: Install Blender and ZIP
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender zip
+          blender --version
+
+      - name: Generate model, rig, exports, textures and previews
+        env:
+          SHATTERED_VEIL_OUTPUT: ${{ github.workspace }}/TheShatteredVeil
+        run: |
+          blender --background --python TheShatteredVeil/BlenderGenerateAsset.py
+
+      - name: Validate required outputs
+        run: |
+          test -s TheShatteredVeil/TheShatteredVeil.blend
+          test -s TheShatteredVeil/TheShatteredVeil_Roblox.fbx
+          test -s TheShatteredVeil/TheShatteredVeil_Roblox.glb
+          test -s TheShatteredVeil/PREVIEW_FRONT.png
+          test -s TheShatteredVeil/PREVIEW_BACK.png
+          test -s TheShatteredVeil/PREVIEW_THREE_QUARTER.png
+          test -s TheShatteredVeil/PREVIEW_WEAPONS.png
+          test -s TheShatteredVeil/TheShatteredVeil_RobloxAsset.zip
+          python3 -m json.tool TheShatteredVeil/BUILD_REPORT.json >/dev/null
+
+      - name: Commit generated asset files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+          else
+            git commit -m "Generate The Shattered Veil Roblox asset"
+            git push
+          fi
+
+      - name: Upload downloadable package
+        uses: actions/upload-artifact@v4
+        with:
+          name: TheShatteredVeil_RobloxAsset
+          path: TheShatteredVeil/TheShatteredVeil_RobloxAsset.zip
+          if-no-files-found: error
