@@ -2,39 +2,48 @@ $ErrorActionPreference = "Stop"
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $OutputDir = Join-Path $RepoRoot "TheShatteredVeil"
-$Generator = Join-Path $OutputDir "BlenderGenerateAsset.py"
-$GeneratorParts = Join-Path $PSScriptRoot "generator"
-$Runner = Join-Path $PSScriptRoot "run_blender_build.py"
+$ProgressDir = Join-Path $OutputDir "Progress"
+$Generator = Join-Path $OutputDir "Phase1_Body.py"
 
-New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
-
-# Restore the readable Blender Python generator from the compressed repository source.
-# This avoids requiring the user to copy a large script manually.
-$parts = Get-ChildItem $GeneratorParts -Filter "BlenderGenerateAsset.py.gz.b64.part*" -File |
-    Sort-Object Name
-if (-not $parts) {
-    throw "Generator source parts were not found in $GeneratorParts. Run git pull and try again."
+if (-not (Test-Path $Generator)) {
+    throw "Missing Phase 1 generator: $Generator. Run git pull and try again."
 }
 
-$base64 = ($parts | ForEach-Object { Get-Content $_.FullName -Raw }) -join ""
-$compressedBytes = [Convert]::FromBase64String($base64)
-$inputStream = [System.IO.MemoryStream]::new($compressedBytes)
-$gzipStream = [System.IO.Compression.GZipStream]::new(
-    $inputStream,
-    [System.IO.Compression.CompressionMode]::Decompress
+New-Item -ItemType Directory -Force -Path $ProgressDir | Out-Null
+
+# Remove outputs from the abandoned full-character generator so the rebuild
+# cannot be confused with the previous failed model.
+$legacyOutputs = @(
+    "TheShatteredVeil.blend",
+    "TheShatteredVeil_Roblox.fbx",
+    "TheShatteredVeil_Roblox.glb",
+    "PREVIEW_FRONT.png",
+    "PREVIEW_BACK.png",
+    "PREVIEW_THREE_QUARTER.png",
+    "PREVIEW_WEAPONS.png",
+    "BUILD_REPORT.json",
+    "BlenderGenerateAsset.py"
 )
-$outputStream = [System.IO.File]::Create($Generator)
-try {
-    $gzipStream.CopyTo($outputStream)
-}
-finally {
-    $outputStream.Dispose()
-    $gzipStream.Dispose()
-    $inputStream.Dispose()
+foreach ($file in $legacyOutputs) {
+    $path = Join-Path $OutputDir $file
+    if (Test-Path $path) {
+        Remove-Item $path -Force
+    }
 }
 
-if (-not (Test-Path $Runner)) {
-    throw "Missing Blender build runner: $Runner. Run git pull and try again."
+# Clear only generated Phase 1 outputs. The source script remains untouched.
+$phase1Outputs = @(
+    "Phase1_Body_Front.png",
+    "Phase1_Body_Side.png",
+    "Phase1_Body.blend",
+    "Phase1_Body.glb",
+    "Phase1_Report.json"
+)
+foreach ($file in $phase1Outputs) {
+    $path = Join-Path $ProgressDir $file
+    if (Test-Path $path) {
+        Remove-Item $path -Force
+    }
 }
 
 $candidates = @()
@@ -43,51 +52,50 @@ if ($command) {
     $candidates += $command.Source
 }
 
-$installRoot = Join-Path $env:ProgramFiles "Blender Foundation"
-if (Test-Path $installRoot) {
-    $candidates += Get-ChildItem $installRoot -Filter blender.exe -File -Recurse -ErrorAction SilentlyContinue |
-        Sort-Object FullName -Descending |
-        ForEach-Object { $_.FullName }
-}
-
-$localInstallRoot = Join-Path $env:LOCALAPPDATA "Programs\Blender Foundation"
-if (Test-Path $localInstallRoot) {
-    $candidates += Get-ChildItem $localInstallRoot -Filter blender.exe -File -Recurse -ErrorAction SilentlyContinue |
-        Sort-Object FullName -Descending |
-        ForEach-Object { $_.FullName }
+$installRoots = @(
+    (Join-Path $env:ProgramFiles "Blender Foundation"),
+    (Join-Path $env:LOCALAPPDATA "Programs\Blender Foundation")
+)
+foreach ($installRoot in $installRoots) {
+    if (Test-Path $installRoot) {
+        $candidates += Get-ChildItem $installRoot -Filter blender.exe -File -Recurse -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending |
+            ForEach-Object { $_.FullName }
+    }
 }
 
 $Blender = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
 if (-not $Blender) {
-    throw "Blender was not found. Confirm Blender is installed, then send me its installation path."
+    throw "Blender was not found. Send me the full path to blender.exe."
 }
 
+Write-Host "Fresh rebuild: Phase 1 - body proportions and anatomy" -ForegroundColor Cyan
 Write-Host "Using Blender:" $Blender -ForegroundColor Cyan
 Write-Host "Generator:" $Generator -ForegroundColor Cyan
-Write-Host "Runner:" $Runner -ForegroundColor Cyan
-Write-Host "Output:" $OutputDir -ForegroundColor Cyan
+Write-Host "Output:" $ProgressDir -ForegroundColor Cyan
 
 $env:SHATTERED_VEIL_OUTPUT = $OutputDir
-& $Blender --background --factory-startup --python $Runner
+& $Blender --background --factory-startup --python $Generator
 if ($LASTEXITCODE -ne 0) {
     throw "Blender exited with code $LASTEXITCODE."
 }
 
 $required = @(
-    "TheShatteredVeil.blend",
-    "TheShatteredVeil_Roblox.fbx",
-    "PREVIEW_FRONT.png",
-    "PREVIEW_BACK.png",
-    "PREVIEW_THREE_QUARTER.png",
-    "PREVIEW_WEAPONS.png",
-    "BUILD_REPORT.json"
+    "Phase1_Body_Front.png",
+    "Phase1_Body_Side.png",
+    "Phase1_Body.blend",
+    "Phase1_Body.glb",
+    "Phase1_Report.json"
 )
-
 foreach ($file in $required) {
-    $path = Join-Path $OutputDir $file
+    $path = Join-Path $ProgressDir $file
     if (-not (Test-Path $path)) {
-        throw "Build completed without required output: $path"
+        throw "Phase 1 completed without required output: $path"
     }
 }
 
-Write-Host "The Shattered Veil Blender blockout generated successfully." -ForegroundColor Green
+Write-Host ""
+Write-Host "Phase 1 generated successfully." -ForegroundColor Green
+Write-Host "Review these two images before any other modeling continues:" -ForegroundColor Green
+Write-Host (Join-Path $ProgressDir "Phase1_Body_Front.png")
+Write-Host (Join-Path $ProgressDir "Phase1_Body_Side.png")
