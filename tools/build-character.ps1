@@ -4,6 +4,7 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 $OutputDir = Join-Path $RepoRoot "TheShatteredVeil"
 $Generator = Join-Path $OutputDir "BlenderGenerateAsset.py"
 $GeneratorParts = Join-Path $PSScriptRoot "generator"
+$Runner = Join-Path $PSScriptRoot "run_blender_build.py"
 
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 
@@ -30,6 +31,10 @@ finally {
     $outputStream.Dispose()
     $gzipStream.Dispose()
     $inputStream.Dispose()
+}
+
+if (-not (Test-Path $Runner)) {
+    throw "Missing Blender build runner: $Runner. Run git pull and try again."
 }
 
 $candidates = @()
@@ -59,10 +64,11 @@ if (-not $Blender) {
 
 Write-Host "Using Blender:" $Blender -ForegroundColor Cyan
 Write-Host "Generator:" $Generator -ForegroundColor Cyan
+Write-Host "Runner:" $Runner -ForegroundColor Cyan
 Write-Host "Output:" $OutputDir -ForegroundColor Cyan
 
 $env:SHATTERED_VEIL_OUTPUT = $OutputDir
-& $Blender --background --python $Generator
+& $Blender --background --factory-startup --python $Runner
 if ($LASTEXITCODE -ne 0) {
     throw "Blender exited with code $LASTEXITCODE."
 }
