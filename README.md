@@ -1,38 +1,31 @@
 # Roblox Game 1
 
-Current development task: build the original Roblox boss character **The Shattered Veil**.
+Current development task: rebuild the original Roblox boss character **The Shattered Veil** from scratch.
 
-## Generate the Blender blockout
+The abandoned primitive mannequin is not used as a base. Development now follows gated modeling phases so anatomy and silhouette are approved before hair, clothing, weapons, materials, rigging or VFX are added.
 
-1. Open PowerShell inside this repository.
-2. Pull the latest files:
+## Active phase
+
+**Phase 1 — Body proportions and anatomy**
+
+Run from PowerShell inside this repository:
 
 ```powershell
 git pull
-```
-
-3. Run the one-click builder:
-
-```powershell
 .\build-character.bat
 ```
 
-The launcher finds the installed Blender executable, restores the generator, runs Blender in the background, and creates:
+The current build creates only these review outputs:
 
 ```text
-TheShatteredVeil/
-├── TheShatteredVeil.blend
-├── TheShatteredVeil_Roblox.fbx
-├── TheShatteredVeil_Roblox.glb
-├── PREVIEW_FRONT.png
-├── PREVIEW_BACK.png
-├── PREVIEW_THREE_QUARTER.png
-├── PREVIEW_WEAPONS.png
-└── BUILD_REPORT.json
+TheShatteredVeil/Progress/
+├── Phase1_Body_Front.png
+├── Phase1_Body_Side.png
+├── Phase1_Body.blend
+├── Phase1_Body.glb
+└── Phase1_Report.json
 ```
 
-This is the first real Blender silhouette blockout, not the final production model. Review the four previews before detailed sculpting, topology, final materials, and Roblox testing.
+Send the front and side PNG files for review. Phase 2 will not begin until the body proportions are accepted or corrected.
 
-## Iteration workflow
-
-After each build, send the four preview images or a screenshot of Blender. The next repository update will refine the actual model rather than replacing the project manually.
+See `TheShatteredVeil/README_PHASE1.md` for the precise scope and approval gate.
