@@ -3,25 +3,25 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $OutputDir = Join-Path $RepoRoot "TheShatteredVeil"
 $ProgressDir = Join-Path $OutputDir "Progress"
-$Generator = Join-Path $OutputDir "Phase2_Silhouette.py"
+$Generator = Join-Path $OutputDir "Phase3_Connected.py"
 
 if (-not (Test-Path $Generator)) {
-    throw "Missing silhouette generator: $Generator"
+    throw "Missing connected character generator: $Generator. Run git pull and try again."
 }
 
 New-Item -ItemType Directory -Force -Path $ProgressDir | Out-Null
 
-$phaseOutputs = @(
-    "Silhouette_Front.png",
-    "Silhouette_Side.png",
-    "Silhouette_Back.png",
-    "Silhouette_ThreeQuarter.png",
-    "Silhouette_Weapons.png",
-    "Silhouette_Pass.blend",
-    "Silhouette_Pass.glb",
-    "Silhouette_Report.json"
+$outputs = @(
+    "Connected_Front.png",
+    "Connected_Side.png",
+    "Connected_Back.png",
+    "Connected_ThreeQuarter.png",
+    "Connected_Weapons.png",
+    "Connected_Pass.blend",
+    "Connected_Pass.glb",
+    "Connected_Report.json"
 )
-foreach ($file in $phaseOutputs) {
+foreach ($file in $outputs) {
     $path = Join-Path $ProgressDir $file
     if (Test-Path $path) {
         Remove-Item $path -Force
@@ -51,38 +51,30 @@ if (-not $Blender) {
     throw "Blender was not found. Send me the full path to blender.exe."
 }
 
-Write-Host "Silhouette rebuild: head concealment, hair, clothing, swords" -ForegroundColor Cyan
+Write-Host "Connected character rebuild: limbs, robe, hair and attached swords" -ForegroundColor Cyan
 Write-Host "Using Blender:" $Blender -ForegroundColor Cyan
 Write-Host "Generator:" $Generator -ForegroundColor Cyan
 Write-Host "Output:" $ProgressDir -ForegroundColor Cyan
 
 $env:SHATTERED_VEIL_OUTPUT = $OutputDir
 & $Blender --background --factory-startup --python $Generator
-if ($LASTEXITCODE -ne 0) {
-    throw "Blender exited with code $LASTEXITCODE."
+$BlenderExitCode = $LASTEXITCODE
+
+if ($BlenderExitCode -ne 0) {
+    throw "Blender exited with code $BlenderExitCode."
 }
 
-$required = @(
-    "Silhouette_Front.png",
-    "Silhouette_Side.png",
-    "Silhouette_Back.png",
-    "Silhouette_ThreeQuarter.png",
-    "Silhouette_Weapons.png",
-    "Silhouette_Pass.blend",
-    "Silhouette_Pass.glb",
-    "Silhouette_Report.json"
-)
-foreach ($file in $required) {
+foreach ($file in $outputs) {
     $path = Join-Path $ProgressDir $file
     if (-not (Test-Path $path)) {
-        throw "Silhouette pass completed without required output: $path"
+        throw "Connected pass completed without required output: $path"
     }
 }
 
 Write-Host ""
-Write-Host "Silhouette pass generated successfully." -ForegroundColor Green
-Write-Host (Join-Path $ProgressDir "Silhouette_Front.png")
-Write-Host (Join-Path $ProgressDir "Silhouette_Side.png")
-Write-Host (Join-Path $ProgressDir "Silhouette_Back.png")
-Write-Host (Join-Path $ProgressDir "Silhouette_ThreeQuarter.png")
-Write-Host (Join-Path $ProgressDir "Silhouette_Weapons.png")
+Write-Host "Connected character pass generated successfully." -ForegroundColor Green
+Write-Host (Join-Path $ProgressDir "Connected_Front.png")
+Write-Host (Join-Path $ProgressDir "Connected_Side.png")
+Write-Host (Join-Path $ProgressDir "Connected_Back.png")
+Write-Host (Join-Path $ProgressDir "Connected_ThreeQuarter.png")
+Write-Host (Join-Path $ProgressDir "Connected_Weapons.png")
