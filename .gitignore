@@ -1,0 +1,12 @@
+# Blender-generated outputs
+assets/generated/*.blend
+assets/generated/*.blend1
+assets/generated/*.fbx
+
+# Blender temporary files
+*.blend1
+*.blend2
+
+# Python cache
+__pycache__/
+*.pyc
