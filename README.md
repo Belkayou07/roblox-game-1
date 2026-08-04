@@ -100,6 +100,29 @@ tools/blender/create_roblox_avatar_blueprint.py
 
 The `PARTS`, `BONES`, and `ATTACHMENTS` tables are the main editable blueprint data. Generated `.blend` and `.fbx` files are disposable outputs and should not be treated as the source of truth.
 
+## First character: Cursed Ninja
+
+The first original character built on the blocky R15 direction is a tall cursed ninja with obscured face, torn black-and-red robes, long hair, broken armor, and two asymmetric curved swords.
+
+Generate it by double-clicking:
+
+```text
+tools\blender\run_cursed_ninja_windows.bat
+```
+
+Generated files:
+
+```text
+assets\generated\cursed_ninja\cursed_ninja.blend
+assets\generated\cursed_ninja\cursed_ninja.fbx
+```
+
+The complete design notes and current limitations are documented in:
+
+```text
+docs\cursed-ninja.md
+```
+
 ## Current limitations
 
-This is a strong modeling and rigging base, but it is not yet claimed to be Marketplace-ready. Final validation may still require Roblox's official cage templates, Avatar Setup, dynamic-head data, and Studio-side rig configuration depending on how the character will be used.
+These assets are modeling and rigging bases, but they are not yet claimed to be Marketplace-ready. Final validation may still require Roblox's official cage templates, Avatar Setup, dynamic-head data, optimized topology, authored textures, and Studio-side rig configuration depending on how each character will be used.
