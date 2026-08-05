@@ -1,7 +1,9 @@
 # Blender-generated outputs
-assets/generated/*.blend
-assets/generated/*.blend1
-assets/generated/*.fbx
+assets/generated/**/*.blend
+assets/generated/**/*.blend1
+assets/generated/**/*.blend2
+assets/generated/**/*.fbx
+assets/generated/**/*.png
 
 # Blender temporary files
 *.blend1
