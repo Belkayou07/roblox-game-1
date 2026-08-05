@@ -146,7 +146,7 @@ def extruded_polygon(
     mesh.update()
     obj = bpy.data.objects.new(name, mesh)
     col.objects.link(obj)
-    return base.finish(obj, name, col, mat, bevel_width=0.028, subdivision=1)
+    return base.finish(obj, name, col, mat, bevel_width=0.028, subdivision=0)
 
 
 def hand_v5(side: str, col: bpy.types.Collection, mat: bpy.types.Material) -> bpy.types.Object:
@@ -167,6 +167,8 @@ def hand_v5(side: str, col: bpy.types.Collection, mat: bpy.types.Material) -> bp
         (0.00, -0.095),
     )
     polygon = tuple((sign * (wrist + x), 4.98 + z) for x, z in local)
+    if side == "L":
+        polygon = tuple(reversed(polygon))
     return extruded_polygon(f"BODY_Hand_{side}", polygon, 0.235, col, mat)
 
 
@@ -198,7 +200,7 @@ def foot_v5(side: str, col: bpy.types.Collection, mat: bpy.types.Material) -> bp
     mesh.update()
     obj = bpy.data.objects.new(f"BODY_Foot_{side}", mesh)
     col.objects.link(obj)
-    return base.finish(obj, f"BODY_Foot_{side}", col, mat, bevel_width=0.035, subdivision=1)
+    return base.finish(obj, f"BODY_Foot_{side}", col, mat, bevel_width=0.035, subdivision=0)
 
 
 def build_body_v5(cols, mats):
