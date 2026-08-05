@@ -9,7 +9,7 @@ The proportions are inspired by the supplied anime Roblox production sheets whil
 - Neutral stylized head with no authored identity
 - One continuous torso-and-pelvis core mesh
 - Separate neck, upper arms, lower arms, neutral hands, upper legs, lower legs, and bare feet
-- Clean elbow and knee gaps only where articulation requires them
+- Clean elbow and knee articulation gaps
 - Smooth multi-bone weighting across the body core
 - Stable rigid weighting for modular limbs
 - Full humanoid armature named `RIG_AnimeRoblox`
@@ -39,22 +39,23 @@ The empty `04_HAIR`, `05_CLOTHING`, `06_BOOTS`, and `07_ACCESSORIES` collections
 The Windows launcher runs:
 
 ```text
-tools\blender\create_anime_roblox_base_mannequin_v5.py
+tools\blender\create_anime_roblox_base_mannequin_v6.py
 ```
 
-Version 5 is a structural rebuild rather than another bridge-piece polish pass:
+Version 6 keeps the successful V5 structure and applies a focused silhouette polish:
 
-- upper torso, waist, and pelvis are one uninterrupted `BODY_Core` mesh
-- the core is smoothly weighted across `Pelvis`, `Spine_01`, `Spine_02`, and `Chest`
-- arms and legs begin inside the core instead of using visible shoulder and hip bridge pieces
-- elbows and knees use small deliberate gaps rather than overlapping caps
-- hands are single-piece neutral mitten forms with restrained integrated thumbs
-- feet are single-piece wedge forms without separate toe blobs
-- pelvis width and projection are reduced
-- limbs are slightly thicker and better balanced against the torso
-- side-profile depth is shaped directly into the core mesh
+- shoulder slope is shaped directly into the continuous body core
+- the chest is less triangular and the pelvis is slightly narrower
+- upper arms begin deeper inside the torso to reduce the disconnected shoulder look
+- elbow and knee gaps are smaller and more deliberate
+- arms use shaped oval sections instead of simple straight cones
+- thighs and calves have subtle volume changes for a cleaner neutral leg silhouette
+- hands are slimmer single-piece forms with restrained thumb definition
+- feet include an ankle rise and a softer forefoot taper
+- lower legs now finish close to the feet instead of appearing suspended above them
+- side and three-quarter framing is tightened for easier silhouette review
 
-The v1–v4 files remain in the repository as shared implementation and earlier working stages.
+The V1–V5 files remain in the repository as shared implementation and earlier working stages.
 
 ## Generate on Windows
 
@@ -69,7 +70,7 @@ tools\blender\run_anime_roblox_base_mannequin_windows.bat
 Terminal alternative:
 
 ```powershell
-blender --background --python tools/blender/create_anime_roblox_base_mannequin_v5.py
+blender --background --python tools/blender/create_anime_roblox_base_mannequin_v6.py
 ```
 
 ## Generated output
@@ -107,5 +108,5 @@ Running the launcher replaces the previous generated files. Generated outputs ar
 - The torso core is continuous, but limbs remain separate modular meshes for predictable Roblox-oriented production.
 - Hands and feet are intentionally simplified blueprint forms, not close-up anatomy sculpts.
 - The blank head intentionally has no facial edge-loop system or facial rig.
-- Version 5 passes Python syntax validation but still requires local Blender rendering and Roblox Studio FBX import testing.
+- Version 6 passes Python syntax validation but still requires local Blender rendering and Roblox Studio FBX import testing.
 - Roblox avatar publication may require Avatar Setup work, cages, body-part conventions, and Studio-side configuration depending on final use.
