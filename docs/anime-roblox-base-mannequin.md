@@ -8,7 +8,7 @@ The proportions are inspired by the supplied anime Roblox production sheets, whi
 
 - Neutral stylized head with no authored identity
 - Neck, upper torso, lower torso, and pelvis
-- Separate shoulders, arms, hands, hips, legs, feet, toes, and joint guides
+- Separate shoulders, arms, hands, hips, legs, bare feet, toes, and joint guides
 - Simplified five-digit hands
 - Full humanoid armature named `RIG_AnimeRoblox`
 - Non-deforming hand/foot IK and pole control bones
@@ -35,15 +35,23 @@ The empty `04_HAIR`, `05_CLOTHING`, `06_BOOTS`, and `07_ACCESSORIES` collections
 
 ## Current generator
 
-The Windows launcher now runs:
+The Windows launcher runs:
 
 ```text
-tools\blender\create_anime_roblox_base_mannequin_v2.py
+tools\blender\create_anime_roblox_base_mannequin_v3.py
 ```
 
-Version 2 corrects the first visual prototype by adding smoother torso volumes, overlapping shoulder and hip transitions, shorter arms, improved hands and bare feet, stronger blueprint coloring, wider camera framing, hidden Blender startup objects, and a readable rig-overlay render.
+Version 3 extends the tested v2 pipeline and focuses on the visible anatomy issues found in the second render pass:
 
-The original `create_anime_roblox_base_mannequin.py` remains as the stable shared implementation used by version 2.
+- smoother neck flow into the head and torso
+- smaller, less toy-like shoulder transitions
+- cleaner pelvis and hip connections
+- slimmer elbows and knees
+- two-segment fingers and a more structured thumb
+- narrower bare feet with separated readable toe masses
+- more useful side-profile depth and camera angle
+
+The v1 and v2 files remain in the repository as the shared implementation and earlier working stages.
 
 ## Generate on Windows
 
@@ -60,7 +68,7 @@ The launcher searches for Blender in `PATH` and under the standard Blender Found
 Terminal alternative:
 
 ```powershell
-blender --background --python tools/blender/create_anime_roblox_base_mannequin_v2.py
+blender --background --python tools/blender/create_anime_roblox_base_mannequin_v3.py
 ```
 
 ## Generated output
@@ -97,8 +105,8 @@ Do not edit this asset into one permanent character and then reuse that changed 
 
 ## Current limitations
 
-- The body remains modular and mostly rigidly weighted; it is not yet a seamless final deformation basemesh.
-- Hands are assembled from procedural mesh islands and are not close-up sculpted hands.
+- The body remains modular and mostly rigidly weighted; it is not a seamless final deformation basemesh.
+- Hands and feet remain procedural blueprint geometry rather than close-up anatomy sculpts.
 - The blank head intentionally has no facial edge-loop system or facial rig.
-- Version 2 has passed Python syntax validation but still requires the new Blender output and Roblox Studio import to be visually tested.
+- Version 3 passes Python syntax validation, but the new Blender render and Roblox Studio import still need visual testing.
 - Roblox avatar publication may require Avatar Setup work, cages, body-part conventions, and Studio-side configuration depending on final use.
