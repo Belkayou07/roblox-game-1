@@ -1,14 +1,18 @@
-# Blender-generated outputs
-assets/generated/**/*.blend
-assets/generated/**/*.blend1
-assets/generated/**/*.blend2
-assets/generated/**/*.fbx
-assets/generated/**/*.png
+# Generated Blender outputs
+assets/generated/**
+!assets/generated/.gitkeep
 
-# Blender temporary files
+# Blender temporary and backup files
 *.blend1
 *.blend2
+*.blend@
 
 # Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
