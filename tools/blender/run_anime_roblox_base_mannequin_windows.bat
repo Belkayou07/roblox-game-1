@@ -2,11 +2,11 @@
 setlocal EnableExtensions
 
 set "SCRIPT_DIR=%~dp0"
-set "SCRIPT_PATH=%SCRIPT_DIR%create_anime_roblox_base_mannequin_v5.py"
+set "SCRIPT_PATH=%SCRIPT_DIR%create_anime_roblox_base_mannequin_v6.py"
 set "BLENDER_EXE="
 
 if not exist "%SCRIPT_PATH%" (
-    echo [ERROR] The v5 Blender generator was not found:
+    echo [ERROR] The v6 Blender generator was not found:
     echo %SCRIPT_PATH%
     pause
     exit /b 1
@@ -32,7 +32,7 @@ if not defined BLENDER_EXE (
 echo Using Blender:
 echo %BLENDER_EXE%
 echo.
-echo Generating the v5 blank anime Roblox base mannequin...
+echo Generating the v6 blank anime Roblox base mannequin...
 echo Existing generated outputs will be replaced.
 echo This can take several minutes because Blender also renders preview images.
 echo.
@@ -49,7 +49,7 @@ if not "%RESULT%"=="0" (
 )
 
 echo.
-echo [DONE] The v5 mannequin was generated successfully.
+echo [DONE] The v6 mannequin was generated successfully.
 echo Output folder:
 echo %SCRIPT_DIR%..\..\assets\generated\anime_roblox_base_mannequin
 pause
