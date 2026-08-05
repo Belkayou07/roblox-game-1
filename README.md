@@ -2,63 +2,45 @@
 
 This repository contains script-generated Blender assets for the Roblox game.
 
-## Current asset: Blocky R15 avatar blueprint
+## Anime Roblox basemodel
 
-The current blueprint combines two ideas:
+The modular anime basemodel is an original neutral male NPC foundation designed for reusable Roblox characters. It includes stylized body geometry, face parts, chunky modular hair, training clothes, boots, a humanoid armature, attachments, pose actions, LOD meshes, preview outlines, cameras, lighting, renders, and FBX preparation.
 
-- the simple approximately five-stud silhouette of the classic R6 avatar
-- the modern Roblox R15 humanoid structure required for much better articulation
-
-It is therefore **not a six-part R6 rig**. It is a blocky, R6-looking character divided into the modern 15 Roblox body meshes.
-
-### Included body meshes
-
-The generator creates Roblox's required body-object names:
-
-- `Head_Geo`
-- `UpperTorso_Geo`
-- `LowerTorso_Geo`
-- left and right upper arms
-- left and right lower arms
-- left and right hands
-- left and right upper legs
-- left and right lower legs
-- left and right feet
-
-### Included rigging
-
-The armature contains the standard hierarchy beginning with:
+Generate it on Windows by pulling the repository and double-clicking:
 
 ```text
-Root
-└── HumanoidRootNode
-    └── LowerTorso
+tools\blender\run_anime_roblox_basemodel_windows.bat
 ```
 
-It also includes the standard limb bones plus optional higher-fidelity controls for:
+Or run it from a terminal when Blender is available in PATH:
 
-- spine
-- chest
-- left and right clavicles
-- head base
+```powershell
+blender --background --python tools/blender/create_anime_roblox_basemodel.py
+```
 
-The separate arm, hand, leg, foot, head, and lower-torso meshes are weight-bound to their corresponding bones. The upper torso contains extra edge loops and blended weights so the spine, chest, and shoulder area can deform instead of moving as one completely rigid box.
+Generated files are written to:
 
-The Blender file also contains a short movement preview:
+```text
+assets\generated\anime_roblox_basemodel\anime_roblox_basemodel.blend
+assets\generated\anime_roblox_basemodel\anime_roblox_basemodel.fbx
+assets\generated\anime_roblox_basemodel\anime_basemodel_front.png
+assets\generated\anime_roblox_basemodel\anime_basemodel_side.png
+assets\generated\anime_roblox_basemodel\anime_basemodel_back.png
+assets\generated\anime_roblox_basemodel\anime_basemodel_threequarter.png
+assets\generated\anime_roblox_basemodel\anime_basemodel_rig.png
+```
 
-- frame `1`: neutral pose
-- frame `35`: articulated test pose
-- frame `70`: neutral pose
+The main source is:
 
-### Attachments
+```text
+tools\blender\create_anime_roblox_basemodel.py
+```
 
-The blueprint includes the 19 standard `_Att` avatar attachment markers for hats, hair, face items, collars, body accessories, waist accessories, grips, shoulders, and feet.
+The script targets Blender 4.2 or newer, uses one Blender unit per Roblox stud, is safe to rerun, and prints a validation report after generation.
 
-## Generate it on Windows
+## Blocky R15 avatar blueprint
 
-1. Pull the repository changes.
-2. Make sure Blender 4.2 or newer is installed.
-3. Double-click:
+The earlier blueprint combines the simple silhouette of a classic R6 avatar with a modern R15-style articulated structure. Generate it by double-clicking:
 
 ```text
 tools\blender\run_avatar_blueprint_windows.bat
@@ -71,38 +53,15 @@ assets\generated\blocky_r15_blueprint.blend
 assets\generated\blocky_r15_blueprint.fbx
 ```
 
-Open the `.blend` file and inspect frame `35` to verify the available movement.
-
-## Run from a terminal
-
-When Blender is available in PATH:
-
-```powershell
-blender --background --python tools/blender/create_roblox_avatar_blueprint.py
-```
-
-## Roblox Studio test import
-
-1. Open Roblox Studio.
-2. Open **3D Importer**.
-3. Select `assets/generated/blocky_r15_blueprint.fbx`.
-4. Use the default/classic rig scale when prompted.
-5. Inspect all 15 `_Geo` meshes and the armature hierarchy.
-6. Use **Avatar Setup** for further Roblox avatar processing and validation.
-
-The optional spine, chest, clavicle, and head-base bones are higher-fidelity controls. Roblox Studio may require a `HumanoidRigDescription` configuration before those optional controls participate correctly in Roblox avatar animations.
-
-## Main source file
+The source file is:
 
 ```text
-tools/blender/create_roblox_avatar_blueprint.py
+tools\blender\create_roblox_avatar_blueprint.py
 ```
 
-The `PARTS`, `BONES`, and `ATTACHMENTS` tables are the main editable blueprint data. Generated `.blend` and `.fbx` files are disposable outputs and should not be treated as the source of truth.
+## Cursed Ninja character
 
-## First character: Cursed Ninja
-
-The first original character built on the blocky R15 direction is a tall cursed ninja with obscured face, torn black-and-red robes, long hair, broken armor, and two asymmetric curved swords.
+The first original character built on the project is a tall cursed ninja with obscured face, torn black-and-red robes, long hair, broken armor, and two asymmetric curved swords.
 
 Generate it by double-clicking:
 
@@ -117,12 +76,20 @@ assets\generated\cursed_ninja\cursed_ninja.blend
 assets\generated\cursed_ninja\cursed_ninja.fbx
 ```
 
-The complete design notes and current limitations are documented in:
+Design notes are in:
 
 ```text
 docs\cursed-ninja.md
 ```
 
+## Roblox Studio import
+
+1. Open Roblox Studio.
+2. Open **3D Importer**.
+3. Select the generated `.fbx` file.
+4. Inspect the mesh names and armature hierarchy.
+5. Use **Avatar Setup** when the asset needs avatar-specific validation or conversion.
+
 ## Current limitations
 
-These assets are modeling and rigging bases, but they are not yet claimed to be Marketplace-ready. Final validation may still require Roblox's official cage templates, Avatar Setup, dynamic-head data, optimized topology, authored textures, and Studio-side rig configuration depending on how each character will be used.
+These generated assets are modeling and rigging foundations, not guaranteed Marketplace-ready packages. Roblox may still require official cage templates, Avatar Setup, dynamic-head data, Studio-side rig configuration, texture refinement, topology optimization, or animation retargeting depending on the final use case.
