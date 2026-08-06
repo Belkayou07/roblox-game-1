@@ -10,7 +10,7 @@
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "RunnerClient": {
-          "$path": "src/client/init.client.luau"
+          "$path": "src/client/Runner.client.luau"
         }
       }
     }
