@@ -16,9 +16,10 @@ local ACTION_LEFT = "RunnerLeft"
 local ACTION_RIGHT = "RunnerRight"
 local ACTION_BLOCK = "RunnerBlockOtherMovement"
 local ACTION_PRIORITY = Enum.ContextActionPriority.High.Value + 10
+local CAMERA_BIND_NAME = "RunnerFrontCameraSyncTest"
 
-local CAMERA_FIELD_OF_VIEW = 60
-local cameraOffset = Vector3.new(0, 12, 20)
+local CAMERA_FIELD_OF_VIEW = 55
+local cameraOffset = Vector3.new(0, 10, 30)
 local cameraFocusOffset = Vector3.new(0, 3, 0)
 local forwardDirection = Vector3.new(0, 0, 1)
 local upDirection = Vector3.new(0, 1, 0)
@@ -31,7 +32,51 @@ local currentCharacter: Model? = nil
 local currentHumanoid: Humanoid? = nil
 local currentRoot: BasePart? = nil
 local running = false
+local cameraBound = false
 local defaultControls = nil
+
+local function showSyncBanner()
+	local playerGui = player:WaitForChild("PlayerGui", 5)
+	if not playerGui then
+		return
+	end
+
+	local oldGui = playerGui:FindFirstChild("RunnerSyncTestGui")
+	if oldGui then
+		oldGui:Destroy()
+	end
+
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "RunnerSyncTestGui"
+	screenGui.IgnoreGuiInset = true
+	screenGui.ResetOnSpawn = false
+	screenGui.DisplayOrder = 1000
+	screenGui.Parent = playerGui
+
+	local label = Instance.new("TextLabel")
+	label.Name = "Message"
+	label.AnchorPoint = Vector2.new(0.5, 0)
+	label.Position = UDim2.fromScale(0.5, 0.035)
+	label.Size = UDim2.fromScale(0.62, 0.075)
+	label.BackgroundColor3 = Color3.fromRGB(35, 190, 90)
+	label.BackgroundTransparency = 0.05
+	label.BorderSizePixel = 0
+	label.Font = Enum.Font.GothamBold
+	label.Text = "SYNC TEST ACTIVE - FRONT CAMERA"
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextScaled = true
+	label.Parent = screenGui
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 10)
+	corner.Parent = label
+
+	task.delay(5, function()
+		if screenGui.Parent then
+			screenGui:Destroy()
+		end
+	end)
+end
 
 local function inputHeld(inputs): boolean
 	return next(inputs) ~= nil
@@ -109,6 +154,41 @@ local function unbindRunControls()
 	table.clear(activeRightInputs)
 end
 
+local function unbindCamera()
+	if cameraBound then
+		RunService:UnbindFromRenderStep(CAMERA_BIND_NAME)
+		cameraBound = false
+	end
+end
+
+local function bindFrontCamera(root: BasePart)
+	unbindCamera()
+	cameraBound = true
+
+	RunService:BindToRenderStep(
+		CAMERA_BIND_NAME,
+		Enum.RenderPriority.Camera.Value + 100,
+		function()
+			if not running or not root.Parent then
+				return
+			end
+
+			local camera = Workspace.CurrentCamera
+			if not camera then
+				return
+			end
+
+			camera.CameraType = Enum.CameraType.Scriptable
+			camera.FieldOfView = CAMERA_FIELD_OF_VIEW
+			camera.CFrame = CFrame.lookAt(
+				root.Position + cameraOffset,
+				root.Position + cameraFocusOffset,
+				upDirection
+			)
+		end
+	)
+end
+
 local function stopRun()
 	running = false
 
@@ -117,6 +197,7 @@ local function stopRun()
 		movementConnection = nil
 	end
 
+	unbindCamera()
 	unbindRunControls()
 
 	if defaultControls then
@@ -149,6 +230,9 @@ local function startRun()
 	end
 
 	bindRunControls()
+	bindFrontCamera(currentRoot)
+	showSyncBanner()
+	print("[Client] SYNC TEST ACTIVE - FRONT CAMERA")
 
 	movementConnection = RunService.RenderStepped:Connect(function()
 		local humanoid = currentHumanoid
@@ -178,17 +262,6 @@ local function startRun()
 			root.AssemblyLinearVelocity.Y,
 			FORWARD_SPEED
 		)
-
-		local camera = Workspace.CurrentCamera
-		if camera then
-			camera.CameraType = Enum.CameraType.Scriptable
-			camera.FieldOfView = CAMERA_FIELD_OF_VIEW
-			camera.CFrame = CFrame.lookAt(
-				root.Position + cameraOffset,
-				root.Position + cameraFocusOffset,
-				upDirection
-			)
-		end
 	end)
 end
 
