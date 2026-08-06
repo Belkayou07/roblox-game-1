@@ -1,22 +1,19 @@
 # Roblox Game 1
 
-Minimal Roblox and Rojo project.
+Current prototype:
 
-## Current scene
+- One wide, long path
+- One yellow start line
+- Normal Roblox movement before the start line
+- Crossing the line locks the camera behind the player
+- The player then runs forward nonstop at a constant speed
+- Only left and right steering remain available
 
-The server creates only:
+## Controls after crossing
 
-- one spawn position
-- one visible start line
-- one straight path
-
-The path is 60 studs wide and 2,000 studs long.
-
-## Run
-
-```powershell
-rokit install
-rojo serve
+```text
+Q / A / Left Arrow = move left
+D / Right Arrow     = move right
 ```
 
-Connect the Rojo plugin in Roblox Studio, then press **Play**.
+Mobile left/right buttons are also created automatically.
