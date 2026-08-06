@@ -21,7 +21,7 @@ local CAMERA_BIND_NAME = "RunnerCamera"
 local ACTION_PRIORITY = Enum.ContextActionPriority.High.Value + 20
 
 local CAMERA_FIELD_OF_VIEW = 58
-local CAMERA_OFFSET = Vector3.new(0, 36, -18)
+local CAMERA_OFFSET = Vector3.new(0, 31, -18)
 local CAMERA_FOCUS_OFFSET = Vector3.new(0, 1, 18)
 local CAMERA_FOLLOW_SPEED = 9
 local FORWARD = Vector3.new(0, 0, 1)
