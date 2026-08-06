@@ -10,6 +10,8 @@ local RUN_STARTED_ATTRIBUTE = "RunStarted"
 local PATH_WIDTH = world:GetAttribute("PathWidth") or 60
 local FORWARD_SPEED = world:GetAttribute("ForwardSpeed") or 24
 local STRAFE_SPEED = world:GetAttribute("StrafeSpeed") or 20
+local STRAFE_ACCELERATION = 70
+local STRAFE_DECELERATION = 90
 local EDGE_MARGIN = 3
 
 local ACTION_LEFT = "RunnerLeft"
@@ -21,6 +23,7 @@ local ACTION_PRIORITY = Enum.ContextActionPriority.High.Value + 20
 local CAMERA_FIELD_OF_VIEW = 58
 local CAMERA_OFFSET = Vector3.new(0, 36, -18)
 local CAMERA_FOCUS_OFFSET = Vector3.new(0, 1, 18)
+local CAMERA_FOLLOW_SPEED = 9
 local FORWARD = Vector3.new(0, 0, 1)
 local UP = Vector3.new(0, 1, 0)
 
@@ -32,6 +35,16 @@ local defaultControls = nil
 local running = false
 local leftHeld = false
 local rightHeld = false
+local lateralVelocity = 0
+local cameraX: number? = nil
+
+local function moveTowards(current: number, target: number, maximumDelta: number): number
+	if math.abs(target - current) <= maximumDelta then
+		return target
+	end
+
+	return current + math.sign(target - current) * maximumDelta
+end
 
 local function handleLeft(_, inputState: Enum.UserInputState)
 	leftHeld = inputState == Enum.UserInputState.Begin or inputState == Enum.UserInputState.Change
@@ -86,6 +99,11 @@ local function bindControls()
 		Enum.KeyCode.Space,
 		Enum.KeyCode.ButtonA
 	)
+
+	ContextActionService:SetTitle(ACTION_LEFT, "LEFT")
+	ContextActionService:SetTitle(ACTION_RIGHT, "RIGHT")
+	ContextActionService:SetPosition(ACTION_LEFT, UDim2.fromScale(0.14, 0.78))
+	ContextActionService:SetPosition(ACTION_RIGHT, UDim2.fromScale(0.82, 0.78))
 end
 
 local function unbindControls()
@@ -106,6 +124,8 @@ local function stopRun()
 	end
 
 	unbindControls()
+	lateralVelocity = 0
+	cameraX = nil
 
 	if defaultControls then
 		defaultControls:Enable()
@@ -128,6 +148,8 @@ local function startRun()
 	end
 
 	running = true
+	lateralVelocity = 0
+	cameraX = currentRoot.Position.X
 	currentHumanoid.AutoRotate = false
 	currentHumanoid.Jump = false
 	currentHumanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
@@ -139,38 +161,49 @@ local function startRun()
 	bindControls()
 
 	local root = currentRoot
-	RunService:BindToRenderStep(CAMERA_BIND_NAME, Enum.RenderPriority.Camera.Value + 100, function()
+	RunService:BindToRenderStep(CAMERA_BIND_NAME, Enum.RenderPriority.Camera.Value + 100, function(deltaTime)
 		if not running or not root.Parent then
 			return
 		end
 
 		local camera = Workspace.CurrentCamera
-		if camera then
-			camera.CameraType = Enum.CameraType.Scriptable
-			camera.FieldOfView = CAMERA_FIELD_OF_VIEW
-			camera.CFrame = CFrame.lookAt(
-				root.Position + CAMERA_OFFSET,
-				root.Position + CAMERA_FOCUS_OFFSET,
-				UP
-			)
+		if not camera then
+			return
 		end
+
+		local followAlpha = 1 - math.exp(-CAMERA_FOLLOW_SPEED * deltaTime)
+		cameraX = cameraX and cameraX + (root.Position.X - cameraX) * followAlpha or root.Position.X
+
+		local cameraAnchor = Vector3.new(cameraX, root.Position.Y, root.Position.Z)
+		camera.CameraType = Enum.CameraType.Scriptable
+		camera.FieldOfView = CAMERA_FIELD_OF_VIEW
+		camera.CFrame = CFrame.lookAt(
+			cameraAnchor + CAMERA_OFFSET,
+			root.Position + CAMERA_FOCUS_OFFSET,
+			UP
+		)
 	end)
 
-	movementConnection = RunService.RenderStepped:Connect(function()
+	movementConnection = RunService.RenderStepped:Connect(function(deltaTime)
 		local humanoid = currentHumanoid
 		if not humanoid or humanoid.Health <= 0 or not root.Parent then
 			return
 		end
 
 		local steering = (rightHeld and 1 or 0) - (leftHeld and 1 or 0)
+		local targetLateralVelocity = steering * STRAFE_SPEED
+		local acceleration = steering == 0 and STRAFE_DECELERATION or STRAFE_ACCELERATION
+		lateralVelocity = moveTowards(lateralVelocity, targetLateralVelocity, acceleration * deltaTime)
+
 		local maxX = PATH_WIDTH / 2 - EDGE_MARGIN
 		local position = root.Position
 		local clampedX = math.clamp(position.X, -maxX, maxX)
-		local lateralVelocity = steering * STRAFE_SPEED
 
 		if clampedX ~= position.X then
 			position = Vector3.new(clampedX, position.Y, position.Z)
+			root.CFrame = CFrame.lookAt(position, position + FORWARD, UP)
 		end
+
 		if (position.X >= maxX and lateralVelocity > 0) or (position.X <= -maxX and lateralVelocity < 0) then
 			lateralVelocity = 0
 		end
