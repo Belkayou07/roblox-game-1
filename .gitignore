@@ -1,36 +1,18 @@
-# Roblox Studio place and model files
 *.rbxl
 *.rbxlx
 *.rbxm
 *.rbxmx
 *.rbxl.lock
 
-# Generated builds and source maps
 build/
 dist/
 out/
-sourcemap.json
-
-# Package and tool output
 Packages/
 DevPackages/
 .rojo/
-.lune/
 
-# Generated 3D assets
-*.blend
-*.blend1
-*.blend2
-*.blend@
-*.fbx
-*.obj
-*.gltf
-*.glb
-
-# Logs, operating systems, and editors
 *.log
 .DS_Store
 Thumbs.db
-desktop.ini
 .vscode/
 .idea/
