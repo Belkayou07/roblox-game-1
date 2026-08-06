@@ -12,19 +12,18 @@ local FORWARD_SPEED = world:GetAttribute("ForwardSpeed") or 24
 local STRAFE_SPEED = world:GetAttribute("StrafeSpeed") or 20
 local EDGE_MARGIN = 3
 
-local ACTION_LEFT = "RunnerLeftV2"
-local ACTION_RIGHT = "RunnerRightV2"
-local ACTION_BLOCK = "RunnerBlockV2"
-local CAMERA_BIND_NAME = "RunnerCameraV2"
+local ACTION_LEFT = "RunnerLeft"
+local ACTION_RIGHT = "RunnerRight"
+local ACTION_BLOCK = "RunnerBlock"
+local CAMERA_BIND_NAME = "RunnerCamera"
 local ACTION_PRIORITY = Enum.ContextActionPriority.High.Value + 20
 
-local CAMERA_FIELD_OF_VIEW = 55
-local CAMERA_OFFSET = Vector3.new(0, 12, 30)
-local CAMERA_FOCUS_OFFSET = Vector3.new(0, 3, 0)
+local CAMERA_FIELD_OF_VIEW = 50
+local CAMERA_OFFSET = Vector3.new(0, 38, -16)
+local CAMERA_FOCUS_OFFSET = Vector3.new(0, 0, 10)
 local FORWARD = Vector3.new(0, 0, 1)
 local UP = Vector3.new(0, 1, 0)
 
-local currentCharacter: Model? = nil
 local currentHumanoid: Humanoid? = nil
 local currentRoot: BasePart? = nil
 local movementConnection: RBXScriptConnection? = nil
@@ -33,43 +32,6 @@ local defaultControls = nil
 local running = false
 local leftHeld = false
 local rightHeld = false
-
-local function showLoadedBanner()
-	local playerGui = player:WaitForChild("PlayerGui")
-	local oldGui = playerGui:FindFirstChild("RunnerClientV2Gui")
-	if oldGui then
-		oldGui:Destroy()
-	end
-
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "RunnerClientV2Gui"
-	gui.IgnoreGuiInset = true
-	gui.ResetOnSpawn = false
-	gui.DisplayOrder = 1000
-	gui.Parent = playerGui
-
-	local label = Instance.new("TextLabel")
-	label.AnchorPoint = Vector2.new(0.5, 0)
-	label.Position = UDim2.fromScale(0.5, 0.03)
-	label.Size = UDim2.fromScale(0.62, 0.08)
-	label.BackgroundColor3 = Color3.fromRGB(190, 35, 220)
-	label.BorderSizePixel = 0
-	label.Font = Enum.Font.GothamBold
-	label.Text = "RUNNER CLIENT V2 LOADED"
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.TextScaled = true
-	label.Parent = gui
-
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
-	corner.Parent = label
-
-	task.delay(8, function()
-		if gui.Parent then
-			gui:Destroy()
-		end
-	end)
-end
 
 local function handleLeft(_, inputState: Enum.UserInputState)
 	leftHeld = inputState == Enum.UserInputState.Begin or inputState == Enum.UserInputState.Change
@@ -225,7 +187,6 @@ end
 
 local function attachCharacter(character: Model)
 	stopRun()
-	currentCharacter = character
 	currentHumanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
 	currentRoot = character:WaitForChild("HumanoidRootPart", 10) :: BasePart?
 
@@ -242,9 +203,6 @@ local function attachCharacter(character: Model)
 		startRun()
 	end
 end
-
-showLoadedBanner()
-print("[Client] RUNNER CLIENT V2 LOADED")
 
 local playerScripts = player:WaitForChild("PlayerScripts")
 task.spawn(function()
