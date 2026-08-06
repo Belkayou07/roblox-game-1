@@ -7,7 +7,26 @@ Current prototype:
 - Normal Roblox movement before the start line
 - Crossing the line locks the camera behind the player
 - The player then runs forward nonstop at a constant speed
-- Only left and right steering remain available
+- Smooth left and right steering
+- Camera follows the player's sideways movement
+
+## Recommended update workflow
+
+Live Rojo syncing is not required.
+
+After the updater exists locally, double-click:
+
+```text
+UPDATE-GAME.bat
+```
+
+It will automatically:
+
+1. Pull the latest changes from GitHub.
+2. Build a fresh place at `build/RobloxGame1-Latest.rbxlx`.
+3. Open that fresh place in Roblox Studio.
+
+The Rojo Studio plugin can stay disconnected and `rojo serve` does not need to be running.
 
 ## Controls after crossing
 
