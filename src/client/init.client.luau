@@ -17,8 +17,8 @@ local ACTION_RIGHT = "RunnerRight"
 local ACTION_BLOCK = "RunnerBlockOtherMovement"
 local ACTION_PRIORITY = Enum.ContextActionPriority.High.Value + 10
 
-local cameraOffset = Vector3.new(0, 10, -18)
-local cameraFocusOffset = Vector3.new(0, 3, 14)
+local cameraOffset = Vector3.new(0, 14, -24)
+local cameraFocusOffset = Vector3.new(0, 4, 16)
 local forwardDirection = Vector3.new(0, 0, 1)
 local upDirection = Vector3.new(0, 1, 0)
 
