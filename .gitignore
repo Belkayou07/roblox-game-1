@@ -1,18 +1,36 @@
-# Generated Blender outputs
-assets/generated/**
-!assets/generated/.gitkeep
+# Roblox Studio place and model files
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+*.rbxl.lock
 
-# Blender temporary and backup files
+# Generated builds and source maps
+build/
+dist/
+out/
+sourcemap.json
+
+# Package and tool output
+Packages/
+DevPackages/
+.rojo/
+.lune/
+
+# Generated 3D assets
+*.blend
 *.blend1
 *.blend2
 *.blend@
+*.fbx
+*.obj
+*.gltf
+*.glb
 
-# Python cache
-__pycache__/
-*.py[cod]
-
-# Operating system and editor files
+# Logs, operating systems, and editors
+*.log
 .DS_Store
 Thumbs.db
+desktop.ini
 .vscode/
 .idea/

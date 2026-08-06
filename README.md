@@ -1,43 +1,58 @@
-# Roblox Game 1 — Asset Workspace
+# Roblox Game 1
 
-This repository is the source workspace for Roblox-specific assets generated with Blender scripts.
+A clean Luau and Rojo starter repository for a new Roblox game.
 
-## Current foundation: blank anime Roblox mannequin
-
-The first production asset is a completely neutral base mannequin intended to support many different future characters. It contains the body, rig, poses, Roblox references, LOD, previews, and FBX preparation, but deliberately contains no hair, clothing, accessories, weapons, effects, logos, or character-specific identity.
-
-Generate it on Windows by double-clicking:
+## Project structure
 
 ```text
-tools\blender\run_anime_roblox_base_mannequin_windows.bat
+src/
+├── client/   Client-only startup code and systems
+├── server/   Server-authoritative gameplay code
+└── shared/   Modules shared by the client and server
 ```
 
-Main generator:
+Rojo maps these folders into:
 
 ```text
-tools\blender\create_anime_roblox_base_mannequin.py
+ReplicatedStorage/Shared
+ServerScriptService/Server
+StarterPlayer/StarterPlayerScripts/Client
 ```
 
-Documentation:
+## Start developing
+
+1. Open a terminal in the repository.
+2. Install the pinned tools:
+
+```powershell
+rokit install
+```
+
+3. Start Rojo:
+
+```powershell
+rojo serve
+```
+
+4. Open a Roblox Studio place.
+5. Open the Rojo plugin and connect to the running server.
+6. Press **Play**.
+
+The Output window should show:
 
 ```text
-docs\anime-roblox-base-mannequin.md
+[Server] Roblox Game 1 initialized
+[Client] Roblox Game 1 initialized
 ```
 
-## Workflow
+## Development rules
 
-1. Pull the latest repository changes.
-2. Run the requested launcher from `tools/blender/`.
-3. Blender generates local files inside `assets/generated/`.
-4. Inspect the `.blend` source and import the generated FBX into Roblox Studio.
-5. Build each final character as a derived asset rather than modifying the universal blueprint permanently.
+- Keep important gameplay decisions and validation on the server.
+- Treat all client requests as untrusted.
+- Put reusable configuration and shared modules in `src/shared`.
+- Add systems only when the game concept needs them; keep the starter small.
+- Do not commit generated Roblox place files or exported 3D assets.
 
-## Structure
+## Previous asset workspace
 
-```text
-assets/generated/   Local generated outputs; ignored by Git
-docs/               Asset notes and Roblox import instructions
-tools/blender/      Blender Python scripts and Windows launchers
-```
-
-Generated `.blend`, `.fbx`, preview renders, caches, and temporary files are not committed. The scripts and documentation are the source of truth.
+The old Blender mannequin generators and documentation were removed from the current working tree so this repository can serve as a clean game project. They remain recoverable from the Git commit history.
