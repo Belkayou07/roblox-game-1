@@ -17,8 +17,9 @@ local ACTION_RIGHT = "RunnerRight"
 local ACTION_BLOCK = "RunnerBlockOtherMovement"
 local ACTION_PRIORITY = Enum.ContextActionPriority.High.Value + 10
 
-local cameraOffset = Vector3.new(0, 14, -24)
-local cameraFocusOffset = Vector3.new(0, 4, 16)
+local CAMERA_FIELD_OF_VIEW = 60
+local cameraOffset = Vector3.new(0, 34, -22)
+local cameraFocusOffset = Vector3.new(0, 0, 16)
 local forwardDirection = Vector3.new(0, 0, 1)
 local upDirection = Vector3.new(0, 1, 0)
 
@@ -181,6 +182,7 @@ local function startRun()
 		local camera = Workspace.CurrentCamera
 		if camera then
 			camera.CameraType = Enum.CameraType.Scriptable
+			camera.FieldOfView = CAMERA_FIELD_OF_VIEW
 			camera.CFrame = CFrame.lookAt(
 				root.Position + cameraOffset,
 				root.Position + cameraFocusOffset,
