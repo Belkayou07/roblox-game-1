@@ -8,6 +8,10 @@
       }
     },
     "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$properties": {
+        "CharacterRigType": "R6"
+      },
       "StarterPlayerScripts": {
         "RunnerClient": {
           "$path": "src/client/Runner.client.luau"
