@@ -11,6 +11,9 @@
       "StarterPlayerScripts": {
         "RunnerClient": {
           "$path": "src/client/Runner.client.luau"
+        },
+        "CombatClient": {
+          "$path": "src/client/Combat.client.luau"
         }
       }
     }
