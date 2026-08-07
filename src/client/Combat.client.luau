@@ -1,62 +1,129 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
 local REMOTES_FOLDER_NAME = "GameRemotes"
 local ATTACK_EVENT_NAME = "AttackPulse"
 
-local PUNCH_OUT_TIME = 0.09
-local PUNCH_RETURN_TIME = 0.15
-local PUNCH_FORWARD_ANGLE = math.rad(-92)
-local PUNCH_SIDE_ANGLE = math.rad(12)
+local PUNCH_DURATION = 0.24
+local PUNCH_OUT_FRACTION = 0.36
+local PUNCH_FORWARD_ANGLE = math.rad(-96)
+local PUNCH_SIDE_ANGLE = math.rad(10)
+local MIN_LATERAL_DISTANCE = 0.55
 
 local remotesFolder = ReplicatedStorage:WaitForChild(REMOTES_FOLDER_NAME)
 local attackEvent = remotesFolder:WaitForChild(ATTACK_EVENT_NAME) :: RemoteEvent
 
 local nextPunchIsRight = true
-local activePunchId = 0
+local activePunch: {
+	motor: Motor6D,
+	startedAt: number,
+	rightSide: boolean,
+}? = nil
 
-local function isArmPartName(name: string, rightSide: boolean): boolean
-	if rightSide then
-		return name == "RightUpperArm" or name == "Right Arm"
-	end
+local cachedCharacter: Model? = nil
+local cachedRightShoulder: Motor6D? = nil
+local cachedLeftShoulder: Motor6D? = nil
+local printedRigFailure = false
 
-	return name == "LeftUpperArm" or name == "Left Arm"
+local function easeOutQuad(alpha: number): number
+	return 1 - (1 - alpha) * (1 - alpha)
 end
 
-local function getShoulder(character: Model, rightSide: boolean): Motor6D?
-	-- Do not depend on the joint's Name. Custom avatars can rename the Motor6D,
-	-- while the connected Roblox arm body part still tells us which shoulder it is.
+local function easeInOutQuad(alpha: number): number
+	if alpha < 0.5 then
+		return 2 * alpha * alpha
+	end
+
+	return 1 - ((-2 * alpha + 2) ^ 2) / 2
+end
+
+local function describeRig(character: Model): string
+	local entries = {}
+
+	for _, descendant in character:GetDescendants() do
+		if descendant:IsA("Motor6D") then
+			local part0Name = descendant.Part0 and descendant.Part0.Name or "nil"
+			local part1Name = descendant.Part1 and descendant.Part1.Name or "nil"
+			table.insert(entries, string.format("%s:%s->%s", descendant.Name, part0Name, part1Name))
+		end
+	end
+
+	if #entries == 0 then
+		return "no Motor6D joints found"
+	end
+
+	return table.concat(entries, " | ")
+end
+
+local function discoverShoulders(character: Model): (Motor6D?, Motor6D?)
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root or not root:IsA("BasePart") then
+		return nil, nil
+	end
+
+	local bestRight: Motor6D? = nil
+	local bestLeft: Motor6D? = nil
+	local bestRightScore = -math.huge
+	local bestLeftScore = -math.huge
+
 	for _, descendant in character:GetDescendants() do
 		if descendant:IsA("Motor6D") then
 			local part0 = descendant.Part0
 			local part1 = descendant.Part1
-
-			if part1 and isArmPartName(part1.Name, rightSide) then
-				return descendant
+			if not part0 or not part1 then
+				continue
 			end
 
-			if part0 and isArmPartName(part0.Name, rightSide) then
-				return descendant
+			local local0 = root.CFrame:PointToObjectSpace(part0.Position)
+			local local1 = root.CFrame:PointToObjectSpace(part1.Position)
+
+			local outerPosition = local0
+			local innerPosition = local1
+			if math.abs(local1.X) > math.abs(local0.X) then
+				outerPosition = local1
+				innerPosition = local0
+			end
+
+			local outerX = math.abs(outerPosition.X)
+			local innerX = math.abs(innerPosition.X)
+			local lateralStep = outerX - innerX
+
+			-- A shoulder is normally a high joint that moves from the torso's
+			-- center outward toward one side. This rejects elbows and hips without
+			-- depending on Roblox's body-part or Motor6D names.
+			if outerX >= MIN_LATERAL_DISTANCE and lateralStep > 0.2 then
+				local score = outerPosition.Y * 5 + lateralStep * 4 + outerX
+
+				if outerPosition.X > 0 and score > bestRightScore then
+					bestRightScore = score
+					bestRight = descendant
+				elseif outerPosition.X < 0 and score > bestLeftScore then
+					bestLeftScore = score
+					bestLeft = descendant
+				end
 			end
 		end
 	end
 
-	-- Final fallback for unusual rigs that still use recognizable joint names.
-	local sideWord = rightSide and "right" or "left"
-	for _, descendant in character:GetDescendants() do
-		if descendant:IsA("Motor6D") then
-			local lowerName = string.lower(descendant.Name)
-			if string.find(lowerName, sideWord, 1, true)
-				and (string.find(lowerName, "shoulder", 1, true) or string.find(lowerName, "arm", 1, true)) then
-				return descendant
-			end
-		end
+	return bestRight, bestLeft
+end
+
+local function getShoulder(character: Model, rightSide: boolean): Motor6D?
+	if cachedCharacter ~= character then
+		cachedCharacter = character
+		cachedRightShoulder = nil
+		cachedLeftShoulder = nil
+		printedRigFailure = false
 	end
 
-	return nil
+	if not cachedRightShoulder or not cachedLeftShoulder then
+		cachedRightShoulder, cachedLeftShoulder = discoverShoulders(character)
+	end
+
+	return rightSide and cachedRightShoulder or cachedLeftShoulder
 end
 
 local function playPunch()
@@ -75,48 +142,67 @@ local function playPunch()
 
 	local shoulder = getShoulder(character, rightSide)
 	if not shoulder then
-		warn(string.format(
-			"[Combat] Could not find %s arm Motor6D on %s rig",
-			rightSide and "right" or "left",
-			humanoid.RigType.Name
-		))
+		if not printedRigFailure then
+			printedRigFailure = true
+			warn(string.format(
+				"[Combat] Shoulder discovery failed on %s rig. %s",
+				humanoid.RigType.Name,
+				describeRig(character)
+			))
+		end
 		return
 	end
 
-	activePunchId += 1
-	local punchId = activePunchId
-	local restingC0 = shoulder.C0
-	local sideRotation = rightSide and -PUNCH_SIDE_ANGLE or PUNCH_SIDE_ANGLE
-	local punchC0 = restingC0
-		* CFrame.Angles(PUNCH_FORWARD_ANGLE, 0, sideRotation)
-		* CFrame.new(0, 0, -0.35)
-
-	local punchTween = TweenService:Create(
-		shoulder,
-		TweenInfo.new(PUNCH_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{C0 = punchC0}
-	)
-	punchTween:Play()
-
-	task.delay(PUNCH_OUT_TIME, function()
-		if punchId ~= activePunchId or not shoulder.Parent then
-			return
-		end
-
-		local returnTween = TweenService:Create(
-			shoulder,
-			TweenInfo.new(PUNCH_RETURN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-			{C0 = restingC0}
-		)
-		returnTween:Play()
-	end)
+	activePunch = {
+		motor = shoulder,
+		startedAt = time(),
+		rightSide = rightSide,
+	}
 end
+
+-- Animator writes Motor6D.Transform during the animation step. PreSimulation runs
+-- afterward, so this adds the punch on top of the normal running animation instead
+-- of being immediately replaced by it.
+RunService.PreSimulation:Connect(function()
+	local punch = activePunch
+	if not punch then
+		return
+	end
+
+	local motor = punch.motor
+	if not motor.Parent then
+		activePunch = nil
+		return
+	end
+
+	local elapsed = time() - punch.startedAt
+	local normalized = elapsed / PUNCH_DURATION
+	if normalized >= 1 then
+		activePunch = nil
+		return
+	end
+
+	local weight: number
+	if normalized <= PUNCH_OUT_FRACTION then
+		weight = easeOutQuad(normalized / PUNCH_OUT_FRACTION)
+	else
+		weight = 1 - easeInOutQuad((normalized - PUNCH_OUT_FRACTION) / (1 - PUNCH_OUT_FRACTION))
+	end
+
+	local sideAngle = punch.rightSide and -PUNCH_SIDE_ANGLE or PUNCH_SIDE_ANGLE
+	local punchOffset = CFrame.Angles(PUNCH_FORWARD_ANGLE * weight, 0, sideAngle * weight)
+	motor.Transform = motor.Transform * punchOffset
+end)
 
 attackEvent.OnClientEvent:Connect(function()
 	playPunch()
 end)
 
-player.CharacterAdded:Connect(function()
+player.CharacterAdded:Connect(function(character)
 	nextPunchIsRight = true
-	activePunchId += 1
+	activePunch = nil
+	cachedCharacter = character
+	cachedRightShoulder = nil
+	cachedLeftShoulder = nil
+	printedRigFailure = false
 end)
