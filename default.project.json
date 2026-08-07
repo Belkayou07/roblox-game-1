@@ -10,7 +10,7 @@
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "$properties": {
-        "CharacterRigType": "R6"
+        "GameSettingsAvatar": "R6"
       },
       "StarterPlayerScripts": {
         "RunnerClient": {
