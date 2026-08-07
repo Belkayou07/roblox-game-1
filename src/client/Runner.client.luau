@@ -37,6 +37,9 @@ local leftHeld = false
 local rightHeld = false
 local lateralVelocity = 0
 local cameraX: number? = nil
+local cameraOwned = false
+local previousCameraType = nil
+local previousCameraFieldOfView = nil
 
 local function moveTowards(current: number, target: number, maximumDelta: number): number
 	if math.abs(target - current) <= maximumDelta then
@@ -136,10 +139,21 @@ local function stopRun()
 		currentHumanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
 	end
 
-	local camera = Workspace.CurrentCamera
-	if camera then
-		camera.CameraType = Enum.CameraType.Custom
+	if cameraOwned then
+		local camera = Workspace.CurrentCamera
+		if camera then
+			if previousCameraType then
+				camera.CameraType = previousCameraType
+			end
+			if previousCameraFieldOfView then
+				camera.FieldOfView = previousCameraFieldOfView
+			end
+		end
 	end
+
+	cameraOwned = false
+	previousCameraType = nil
+	previousCameraFieldOfView = nil
 end
 
 local function startRun()
@@ -159,6 +173,13 @@ local function startRun()
 	end
 
 	bindControls()
+
+	local initialCamera = Workspace.CurrentCamera
+	if initialCamera then
+		previousCameraType = initialCamera.CameraType
+		previousCameraFieldOfView = initialCamera.FieldOfView
+		cameraOwned = true
+	end
 
 	local root = currentRoot
 	RunService:BindToRenderStep(CAMERA_BIND_NAME, Enum.RenderPriority.Camera.Value + 100, function(deltaTime)
