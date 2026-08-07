@@ -18,23 +18,45 @@ local attackEvent = remotesFolder:WaitForChild(ATTACK_EVENT_NAME) :: RemoteEvent
 local nextPunchIsRight = true
 local activePunchId = 0
 
-local function findMotor(character: Model, names: {string}): Motor6D?
-	for _, name in names do
-		local joint = character:FindFirstChild(name, true)
-		if joint and joint:IsA("Motor6D") then
-			return joint
+local function isArmPartName(name: string, rightSide: boolean): boolean
+	if rightSide then
+		return name == "RightUpperArm" or name == "Right Arm"
+	end
+
+	return name == "LeftUpperArm" or name == "Left Arm"
+end
+
+local function getShoulder(character: Model, rightSide: boolean): Motor6D?
+	-- Do not depend on the joint's Name. Custom avatars can rename the Motor6D,
+	-- while the connected Roblox arm body part still tells us which shoulder it is.
+	for _, descendant in character:GetDescendants() do
+		if descendant:IsA("Motor6D") then
+			local part0 = descendant.Part0
+			local part1 = descendant.Part1
+
+			if part1 and isArmPartName(part1.Name, rightSide) then
+				return descendant
+			end
+
+			if part0 and isArmPartName(part0.Name, rightSide) then
+				return descendant
+			end
+		end
+	end
+
+	-- Final fallback for unusual rigs that still use recognizable joint names.
+	local sideWord = rightSide and "right" or "left"
+	for _, descendant in character:GetDescendants() do
+		if descendant:IsA("Motor6D") then
+			local lowerName = string.lower(descendant.Name)
+			if string.find(lowerName, sideWord, 1, true)
+				and (string.find(lowerName, "shoulder", 1, true) or string.find(lowerName, "arm", 1, true)) then
+				return descendant
+			end
 		end
 	end
 
 	return nil
-end
-
-local function getShoulder(character: Model, rightSide: boolean): Motor6D?
-	if rightSide then
-		return findMotor(character, {"RightShoulder", "Right Shoulder"})
-	end
-
-	return findMotor(character, {"LeftShoulder", "Left Shoulder"})
 end
 
 local function playPunch()
@@ -53,7 +75,11 @@ local function playPunch()
 
 	local shoulder = getShoulder(character, rightSide)
 	if not shoulder then
-		warn("[Combat] Could not find shoulder joint for fist animation")
+		warn(string.format(
+			"[Combat] Could not find %s arm Motor6D on %s rig",
+			rightSide and "right" or "left",
+			humanoid.RigType.Name
+		))
 		return
 	end
 
@@ -63,7 +89,7 @@ local function playPunch()
 	local sideRotation = rightSide and -PUNCH_SIDE_ANGLE or PUNCH_SIDE_ANGLE
 	local punchC0 = restingC0
 		* CFrame.Angles(PUNCH_FORWARD_ANGLE, 0, sideRotation)
-		* CFrame.new(0, 0, -0.2)
+		* CFrame.new(0, 0, -0.35)
 
 	local punchTween = TweenService:Create(
 		shoulder,
