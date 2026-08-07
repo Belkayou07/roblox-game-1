@@ -7,10 +7,10 @@ local player = Players.LocalPlayer
 local REMOTES_FOLDER_NAME = "GameRemotes"
 local ATTACK_EVENT_NAME = "AttackPulse"
 
-local PUNCH_OUT_TIME = 0.08
-local PUNCH_RETURN_TIME = 0.12
-local PUNCH_FORWARD_ANGLE = math.rad(-58)
-local PUNCH_SIDE_ANGLE = math.rad(8)
+local PUNCH_OUT_TIME = 0.09
+local PUNCH_RETURN_TIME = 0.15
+local PUNCH_FORWARD_ANGLE = math.rad(-92)
+local PUNCH_SIDE_ANGLE = math.rad(12)
 
 local remotesFolder = ReplicatedStorage:WaitForChild(REMOTES_FOLDER_NAME)
 local attackEvent = remotesFolder:WaitForChild(ATTACK_EVENT_NAME) :: RemoteEvent
@@ -18,26 +18,23 @@ local attackEvent = remotesFolder:WaitForChild(ATTACK_EVENT_NAME) :: RemoteEvent
 local nextPunchIsRight = true
 local activePunchId = 0
 
-local function getShoulder(character: Model, rightSide: boolean): Motor6D?
-	local upperTorso = character:FindFirstChild("UpperTorso")
-	if upperTorso then
-		local shoulderName = rightSide and "RightShoulder" or "LeftShoulder"
-		local shoulder = upperTorso:FindFirstChild(shoulderName)
-		if shoulder and shoulder:IsA("Motor6D") then
-			return shoulder
-		end
-	end
-
-	local torso = character:FindFirstChild("Torso")
-	if torso then
-		local shoulderName = rightSide and "Right Shoulder" or "Left Shoulder"
-		local shoulder = torso:FindFirstChild(shoulderName)
-		if shoulder and shoulder:IsA("Motor6D") then
-			return shoulder
+local function findMotor(character: Model, names: {string}): Motor6D?
+	for _, name in names do
+		local joint = character:FindFirstChild(name, true)
+		if joint and joint:IsA("Motor6D") then
+			return joint
 		end
 	end
 
 	return nil
+end
+
+local function getShoulder(character: Model, rightSide: boolean): Motor6D?
+	if rightSide then
+		return findMotor(character, {"RightShoulder", "Right Shoulder"})
+	end
+
+	return findMotor(character, {"LeftShoulder", "Left Shoulder"})
 end
 
 local function playPunch()
@@ -46,11 +43,17 @@ local function playPunch()
 		return
 	end
 
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid or humanoid.Health <= 0 then
+		return
+	end
+
 	local rightSide = nextPunchIsRight
 	nextPunchIsRight = not nextPunchIsRight
 
 	local shoulder = getShoulder(character, rightSide)
 	if not shoulder then
+		warn("[Combat] Could not find shoulder joint for fist animation")
 		return
 	end
 
@@ -58,7 +61,9 @@ local function playPunch()
 	local punchId = activePunchId
 	local restingC0 = shoulder.C0
 	local sideRotation = rightSide and -PUNCH_SIDE_ANGLE or PUNCH_SIDE_ANGLE
-	local punchC0 = restingC0 * CFrame.Angles(PUNCH_FORWARD_ANGLE, 0, sideRotation)
+	local punchC0 = restingC0
+		* CFrame.Angles(PUNCH_FORWARD_ANGLE, 0, sideRotation)
+		* CFrame.new(0, 0, -0.2)
 
 	local punchTween = TweenService:Create(
 		shoulder,
