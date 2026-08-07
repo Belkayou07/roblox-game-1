@@ -10,7 +10,7 @@
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "$properties": {
-        "GameSettingsAvatar": "R6"
+        "GameSettingsAvatar": "R15"
       },
       "StarterPlayerScripts": {
         "RunnerClient": {
