@@ -75,7 +75,7 @@ local function bindControls()
 		handleLeft,
 		true,
 		ACTION_PRIORITY,
-		Enum.KeyCode.Q,
+		Enum.KeyCode.A,
 		Enum.KeyCode.Left,
 		Enum.KeyCode.ButtonL1
 	)
