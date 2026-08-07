@@ -16,8 +16,8 @@
         "RunnerClient": {
           "$path": "src/client/Runner.client.luau"
         },
-        "CombatClient": {
-          "$path": "src/client/Combat.client.luau"
+        "RunAnimationClient": {
+          "$path": "src/client/RunAnimation.client.luau"
         }
       }
     }
