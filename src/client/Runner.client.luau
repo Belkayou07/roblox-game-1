@@ -20,9 +20,11 @@ local ACTION_BLOCK = "RunnerBlock"
 local CAMERA_BIND_NAME = "RunnerCamera"
 local ACTION_PRIORITY = Enum.ContextActionPriority.High.Value + 20
 
-local CAMERA_FIELD_OF_VIEW = 58
-local CAMERA_OFFSET = Vector3.new(0, 22, -32)
-local CAMERA_FOCUS_OFFSET = Vector3.new(0, 4, 18)
+-- Top-down runner framing: steep enough that the screen is filled by the road
+-- and play area instead of showing the horizon.
+local CAMERA_FIELD_OF_VIEW = 52
+local CAMERA_OFFSET = Vector3.new(0, 46, -22)
+local CAMERA_FOCUS_OFFSET = Vector3.new(0, 1, 12)
 local CAMERA_FOLLOW_SPEED = 9
 local FORWARD = Vector3.new(0, 0, 1)
 local UP = Vector3.new(0, 1, 0)
