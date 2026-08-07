@@ -10,6 +10,37 @@ local FORWARD_SPEED = 24
 local STRAFE_SPEED = 20
 local RUN_STARTED_ATTRIBUTE = "RunStarted"
 
+local LOBBY_WIDTH = 86
+local LOBBY_BACK_Z = -30
+local LOBBY_LENGTH = START_LINE_Z - LOBBY_BACK_Z
+local LOBBY_CENTER_Z = LOBBY_BACK_Z + LOBBY_LENGTH / 2
+
+local COLOR_LOBBY = Color3.fromRGB(45, 48, 54)
+local COLOR_BORDER = Color3.fromRGB(27, 30, 35)
+local COLOR_PATH = Color3.fromRGB(76, 175, 80)
+local COLOR_START = Color3.fromRGB(255, 221, 64)
+
+local function createPart(
+	name: string,
+	size: Vector3,
+	position: Vector3,
+	material: Enum.Material,
+	color: Color3,
+	parent: Instance
+): Part
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Anchored = true
+	part.Size = size
+	part.Position = position
+	part.Material = material
+	part.Color = color
+	part.TopSurface = Enum.SurfaceType.Smooth
+	part.BottomSurface = Enum.SurfaceType.Smooth
+	part.Parent = parent
+	return part
+end
+
 local function preparePlayer(player: Player)
 	player:SetAttribute(RUN_STARTED_ATTRIBUTE, false)
 
@@ -46,29 +77,123 @@ world:SetAttribute("ForwardSpeed", FORWARD_SPEED)
 world:SetAttribute("StrafeSpeed", STRAFE_SPEED)
 world.Parent = Workspace
 
-local path = Instance.new("Part")
-path.Name = "Path"
-path.Anchored = true
-path.Size = Vector3.new(PATH_WIDTH, PATH_THICKNESS, PATH_LENGTH)
-path.Position = Vector3.new(0, 0, PATH_LENGTH / 2)
-path.Material = Enum.Material.Asphalt
-path.Color = Color3.fromRGB(76, 175, 80)
-path.TopSurface = Enum.SurfaceType.Smooth
-path.BottomSurface = Enum.SurfaceType.Smooth
-path.Parent = world
+-- Main lobby before the run begins.
+local lobby = Instance.new("Folder")
+lobby.Name = "Lobby"
+lobby.Parent = world
 
-local startLine = Instance.new("Part")
-startLine.Name = "StartLine"
-startLine.Anchored = true
+createPart(
+	"LobbyFloor",
+	Vector3.new(LOBBY_WIDTH, PATH_THICKNESS, LOBBY_LENGTH),
+	Vector3.new(0, 0, LOBBY_CENTER_Z),
+	Enum.Material.Concrete,
+	COLOR_LOBBY,
+	lobby
+)
+
+createPart(
+	"LeftBorder",
+	Vector3.new(3, 4, LOBBY_LENGTH - 8),
+	Vector3.new(-(LOBBY_WIDTH / 2 - 1.5), 3, LOBBY_CENTER_Z - 4),
+	Enum.Material.Metal,
+	COLOR_BORDER,
+	lobby
+)
+
+createPart(
+	"RightBorder",
+	Vector3.new(3, 4, LOBBY_LENGTH - 8),
+	Vector3.new(LOBBY_WIDTH / 2 - 1.5, 3, LOBBY_CENTER_Z - 4),
+	Enum.Material.Metal,
+	COLOR_BORDER,
+	lobby
+)
+
+createPart(
+	"BackBorder",
+	Vector3.new(LOBBY_WIDTH, 4, 3),
+	Vector3.new(0, 3, LOBBY_BACK_Z + 1.5),
+	Enum.Material.Metal,
+	COLOR_BORDER,
+	lobby
+)
+
+-- Start gate framing the entrance to the green path.
+createPart(
+	"StartGateLeft",
+	Vector3.new(4, 13, 4),
+	Vector3.new(-(PATH_WIDTH / 2 + 3), 7.5, START_LINE_Z - 2.5),
+	Enum.Material.Metal,
+	COLOR_BORDER,
+	lobby
+)
+
+createPart(
+	"StartGateRight",
+	Vector3.new(4, 13, 4),
+	Vector3.new(PATH_WIDTH / 2 + 3, 7.5, START_LINE_Z - 2.5),
+	Enum.Material.Metal,
+	COLOR_BORDER,
+	lobby
+)
+
+local gateBeam = createPart(
+	"StartGateBeam",
+	Vector3.new(PATH_WIDTH + 10, 4, 4),
+	Vector3.new(0, 15, START_LINE_Z - 2.5),
+	Enum.Material.Metal,
+	COLOR_BORDER,
+	lobby
+)
+
+local gateGui = Instance.new("SurfaceGui")
+gateGui.Name = "StartSign"
+gateGui.Face = Enum.NormalId.Front
+gateGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+gateGui.PixelsPerStud = 35
+gateGui.Parent = gateBeam
+
+local gateText = Instance.new("TextLabel")
+gateText.Name = "Text"
+gateText.Size = UDim2.fromScale(1, 1)
+gateText.BackgroundTransparency = 1
+gateText.Font = Enum.Font.GothamBold
+gateText.Text = "START"
+gateText.TextColor3 = COLOR_START
+gateText.TextScaled = true
+gateText.Parent = gateGui
+
+local startAccent = createPart(
+	"StartGateAccent",
+	Vector3.new(PATH_WIDTH + 2, 0.35, 0.45),
+	Vector3.new(0, 12.8, START_LINE_Z - 4.55),
+	Enum.Material.Neon,
+	COLOR_START,
+	lobby
+)
+startAccent.CanCollide = false
+
+-- Green path begins only after the lobby/start line.
+local runPathLength = PATH_LENGTH - START_LINE_Z
+local path = createPart(
+	"Path",
+	Vector3.new(PATH_WIDTH, PATH_THICKNESS, runPathLength),
+	Vector3.new(0, 0, START_LINE_Z + runPathLength / 2),
+	Enum.Material.Asphalt,
+	COLOR_PATH,
+	world
+)
+
+local startLine = createPart(
+	"StartLine",
+	Vector3.new(PATH_WIDTH, 0.12, 3),
+	Vector3.new(0, PATH_THICKNESS / 2 + 0.07, START_LINE_Z),
+	Enum.Material.Neon,
+	COLOR_START,
+	world
+)
 startLine.CanCollide = false
 startLine.CanTouch = false
-startLine.Size = Vector3.new(PATH_WIDTH, 0.12, 3)
-startLine.Position = Vector3.new(0, PATH_THICKNESS / 2 + 0.07, START_LINE_Z)
-startLine.Material = Enum.Material.Neon
-startLine.Color = Color3.fromRGB(255, 221, 64)
-startLine.TopSurface = Enum.SurfaceType.Smooth
-startLine.BottomSurface = Enum.SurfaceType.Smooth
-startLine.Parent = world
 
 local startTrigger = Instance.new("Part")
 startTrigger.Name = "StartTrigger"
@@ -93,7 +218,7 @@ spawn.CFrame = CFrame.lookAt(
 spawn.Neutral = true
 spawn.Duration = 0
 spawn.AllowTeamChangeOnTouch = false
-spawn.Parent = world
+spawn.Parent = lobby
 
 startTrigger.Touched:Connect(function(hit: BasePart)
 	local character = hit:FindFirstAncestorOfClass("Model")
@@ -114,4 +239,4 @@ startTrigger.Touched:Connect(function(hit: BasePart)
 	player:SetAttribute(RUN_STARTED_ATTRIBUTE, true)
 end)
 
-print("[Server] Start line, path, and run trigger created")
+print("[Server] Main lobby, start gate, and green run path created")
