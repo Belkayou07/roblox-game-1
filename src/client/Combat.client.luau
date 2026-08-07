@@ -7,63 +7,49 @@ local RUN_STARTED_ATTRIBUTE = "RunStarted"
 local REMOTES_FOLDER_NAME = "GameRemotes"
 local ATTACK_EVENT_NAME = "AttackPulse"
 
--- Existing Roblox catalog animations. No manual joint posing.
+-- Existing Roblox animations. No manual joint posing and no emote installation.
 local RUN_ANIMATION_ID = "rbxassetid://656118852" -- Roblox Ninja Run
-local PUNCH_EMOTE_NAME = "AutoPunch"
-local PUNCH_EMOTE_ID = 92995770101297 -- Roblox Boxing Punch - KSI emote
+local PUNCH_ANIMATION_ID = "rbxassetid://522635514" -- Roblox default R15 ToolSlash
 
 local remotesFolder = ReplicatedStorage:WaitForChild(REMOTES_FOLDER_NAME)
 local attackEvent = remotesFolder:WaitForChild(ATTACK_EVENT_NAME) :: RemoteEvent
 
-local currentCharacter: Model? = nil
 local currentHumanoid: Humanoid? = nil
+local currentAnimator: Animator? = nil
 local currentRunTrack: AnimationTrack? = nil
+local currentPunchTrack: AnimationTrack? = nil
 local warnedPunchFailure = false
 
-local function stopRunAnimation()
+local function stopTracks()
 	if currentRunTrack then
 		currentRunTrack:Stop(0.12)
 		currentRunTrack = nil
 	end
-end
 
-local function installPunchEmote(humanoid: Humanoid)
-	local success, description = pcall(function()
-		return humanoid:GetAppliedDescription()
-	end)
-
-	if not success or not description then
-		warn("[Combat] Could not read HumanoidDescription for boxing emote")
-		return
-	end
-
-	local emotes = description:GetEmotes()
-	emotes[PUNCH_EMOTE_NAME] = {PUNCH_EMOTE_ID}
-	description:SetEmotes(emotes)
-
-	local applied, applyError = pcall(function()
-		humanoid:ApplyDescriptionAsync(description)
-	end)
-
-	if not applied then
-		warn("[Combat] Could not install boxing emote: " .. tostring(applyError))
+	if currentPunchTrack then
+		currentPunchTrack:Stop(0.05)
+		currentPunchTrack = nil
 	end
 end
 
-local function loadRunAnimation(humanoid: Humanoid): AnimationTrack?
+local function getAnimator(humanoid: Humanoid): Animator?
 	local animator = humanoid:FindFirstChildOfClass("Animator")
 	if not animator then
 		animator = humanoid:WaitForChild("Animator", 5) :: Animator?
 	end
+	return animator
+end
 
-	if not animator then
-		warn("[Combat] Animator not found")
-		return nil
-	end
-
+local function loadTrack(
+	animator: Animator,
+	name: string,
+	animationId: string,
+	priority: Enum.AnimationPriority,
+	looped: boolean
+): AnimationTrack?
 	local animation = Instance.new("Animation")
-	animation.Name = "RunnerCatalogRun"
-	animation.AnimationId = RUN_ANIMATION_ID
+	animation.Name = name
+	animation.AnimationId = animationId
 
 	local success, track = pcall(function()
 		return animator:LoadAnimation(animation)
@@ -71,23 +57,29 @@ local function loadRunAnimation(humanoid: Humanoid): AnimationTrack?
 	animation:Destroy()
 
 	if not success or not track then
-		warn("[Combat] Could not load Roblox run animation")
 		return nil
 	end
 
-	track.Priority = Enum.AnimationPriority.Movement
-	track.Looped = true
+	track.Priority = priority
+	track.Looped = looped
 	return track
 end
 
 local function startRunAnimation()
 	local humanoid = currentHumanoid
-	if not humanoid or humanoid.Health <= 0 then
+	local animator = currentAnimator
+	if not humanoid or humanoid.Health <= 0 or not animator then
 		return
 	end
 
 	if not currentRunTrack then
-		currentRunTrack = loadRunAnimation(humanoid)
+		currentRunTrack = loadTrack(
+			animator,
+			"RunnerCatalogRun",
+			RUN_ANIMATION_ID,
+			Enum.AnimationPriority.Movement,
+			true
+		)
 	end
 
 	if currentRunTrack and not currentRunTrack.IsPlaying then
@@ -97,7 +89,8 @@ end
 
 local function playPunch()
 	local humanoid = currentHumanoid
-	if not humanoid or humanoid.Health <= 0 then
+	local animator = currentAnimator
+	if not humanoid or humanoid.Health <= 0 or not animator then
 		return
 	end
 
@@ -105,23 +98,36 @@ local function playPunch()
 		return
 	end
 
-	task.spawn(function()
-		local success, result = pcall(function()
-			return humanoid:PlayEmoteAsync(PUNCH_EMOTE_NAME)
-		end)
+	if not currentPunchTrack then
+		currentPunchTrack = loadTrack(
+			animator,
+			"RunnerAutoHit",
+			PUNCH_ANIMATION_ID,
+			Enum.AnimationPriority.Action,
+			false
+		)
+	end
 
-		if (not success or result ~= true) and not warnedPunchFailure then
+	if not currentPunchTrack then
+		if not warnedPunchFailure then
 			warnedPunchFailure = true
-			warn("[Combat] Roblox boxing emote could not play")
+			warn("[Combat] Could not load Roblox punch action animation")
 		end
-	end)
+		return
+	end
+
+	-- Restart cleanly for each automatic attack pulse.
+	if currentPunchTrack.IsPlaying then
+		currentPunchTrack:Stop(0.02)
+	end
+	currentPunchTrack:Play(0.03, 1, 1.35)
 end
 
 local function attachCharacter(character: Model)
-	stopRunAnimation()
+	stopTracks()
 
-	currentCharacter = character
 	currentHumanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
+	currentAnimator = nil
 	warnedPunchFailure = false
 
 	local humanoid = currentHumanoid
@@ -129,14 +135,17 @@ local function attachCharacter(character: Model)
 		return
 	end
 
-	-- Configure the existing Roblox emote once for this character.
-	installPunchEmote(humanoid)
+	currentAnimator = getAnimator(humanoid)
+	if not currentAnimator then
+		warn("[Combat] Animator not found")
+		return
+	end
 
 	if player:GetAttribute(RUN_STARTED_ATTRIBUTE) == true then
 		startRunAnimation()
 	end
 
-	humanoid.Died:Connect(stopRunAnimation)
+	humanoid.Died:Connect(stopTracks)
 end
 
 attackEvent.OnClientEvent:Connect(function()
@@ -147,7 +156,7 @@ player:GetAttributeChangedSignal(RUN_STARTED_ATTRIBUTE):Connect(function()
 	if player:GetAttribute(RUN_STARTED_ATTRIBUTE) == true then
 		startRunAnimation()
 	else
-		stopRunAnimation()
+		stopTracks()
 	end
 end)
 
