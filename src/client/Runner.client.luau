@@ -76,7 +76,6 @@ local function bindControls()
 		true,
 		ACTION_PRIORITY,
 		Enum.KeyCode.Q,
-		Enum.KeyCode.A,
 		Enum.KeyCode.Left,
 		Enum.KeyCode.ButtonL1
 	)
@@ -212,7 +211,7 @@ local function startRun()
 		end
 
 		local steering = (rightHeld and 1 or 0) - (leftHeld and 1 or 0)
-		local targetLateralVelocity = steering * STRAFE_SPEED
+		local targetLateralVelocity = -steering * STRAFE_SPEED
 		local acceleration = steering == 0 and STRAFE_DECELERATION or STRAFE_ACCELERATION
 		lateralVelocity = moveTowards(lateralVelocity, targetLateralVelocity, acceleration * deltaTime)
 
